@@ -17,7 +17,8 @@ namespace UDPProxy
             PORT = port;
         }
 
-        private readonly string URL = "https://watermasterapi.azurewebsites.net/api/sensordata/";
+        private readonly string URL = "https://watermasterapi.azurewebsites.net/api/";
+        
         public void Start()
         {
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any,0);
@@ -43,6 +44,8 @@ namespace UDPProxy
             if (inStr !="")
             {
                 Console.WriteLine(PostSensorData(inStr));
+                System.Threading.Thread.Sleep(2000);
+                UpdateWaterPi(StartWatering(), PORT + 1);
             }
             Console.WriteLine("");
         }
@@ -56,7 +59,7 @@ namespace UDPProxy
             {
                 try
                 {
-                    HttpResponseMessage resultMessage = client.PostAsync(URL, content).Result;
+                    HttpResponseMessage resultMessage = client.PostAsync(URL + "sensordata/", content).Result;
                     return resultMessage.IsSuccessStatusCode;
                 }
                 catch (Exception e)
@@ -66,8 +69,29 @@ namespace UDPProxy
                 }
             }
         }
-            
 
+        public void UpdateWaterPi(int water, int port)
+        {
+            
+        }
+
+        public int StartWatering()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                    bool apiStart = Convert.ToBoolean(client.GetStringAsync(URL +"weather/").Result);
+
+                if (apiStart)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+
+            }
+        }
 
 
         

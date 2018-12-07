@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
+using Newtonsoft.Json;
+using SensorModels;
 
 namespace UDPProxy
 {
@@ -38,17 +40,47 @@ namespace UDPProxy
             byte[] data = receiverSock.Receive(ref remoteEP);
             string inStr = Encoding.ASCII.GetString(data);
 
-            Console.WriteLine("Modtaget" + inStr);
-            Console.WriteLine("Sender IP: " + remoteEP.Address + "port: "+ remoteEP.Port);
-            Console.WriteLine("");
+            //Console.WriteLine("Modtaget: " + inStr);
+            //Console.WriteLine("Sender IP: " + remoteEP.Address + " port: "+ remoteEP.Port);
+            //Console.WriteLine("");
             if (inStr !="")
             {
-                Console.WriteLine(PostSensorData(inStr));
-                System.Threading.Thread.Sleep(2000);
-                UpdateWaterPi(StartWatering(), PORT + 1);
+                if (inStr.Length == 17)
+                {
+                    SetPiPort(inStr);
+                }
+                else
+                {
+                    Console.WriteLine("Has posted: " + PostSensorData(inStr));
+                    SensorData sensorData = JsonConvert.DeserializeObject<SensorData>(inStr) ;
+                    UpdateWaterPi(sensorData.FK_MacAddress);
+                }
             }
             Console.WriteLine("");
         }
+        public void UpdateWaterPi(string mac)
+        {
+            Console.WriteLine("Checking watering");
+            string wateringJson = "";
+            using (HttpClient client = new HttpClient())
+            {
+                wateringJson = client.GetStringAsync(URL + "weather/" + mac).Result;
+            }
+
+            Watering watering = JsonConvert.DeserializeObject<Watering>(wateringJson);
+            Console.WriteLine("Should i water: " + watering.Water);
+
+            byte[] data = Encoding.ASCII.GetBytes(watering.Water.ToString());
+            IPEndPoint recieverEP = new IPEndPoint(IPAddress.Broadcast, watering.Port);
+
+            using (UdpClient senderSock = new UdpClient())
+            {
+                senderSock.EnableBroadcast = true;
+                senderSock.Send(data, data.Length, recieverEP);
+            }
+        }
+
+
 
         public bool PostSensorData(string data)
         {
@@ -70,35 +102,31 @@ namespace UDPProxy
             }
         }
 
-        public void UpdateWaterPi(int water, int port)
+        public void SetPiPort(string mac)
         {
-            
-        }
-
-        public int StartWatering()
-        {
+            //PiPortModel ppm = null;
+            string jsonPort = "";
             using (HttpClient client = new HttpClient())
             {
-                    bool apiStart = Convert.ToBoolean(client.GetStringAsync(URL +"weather/").Result);
+                jsonPort = client.GetStringAsync(URL + "sensor/port/" + mac).Result;
+                //ppm = JsonConvert.DeserializeObject<PiPortModel>(jsonPort);
+            }
 
-                if (apiStart)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
+            Console.WriteLine("Sender: " + jsonPort);
+           
+            byte[] data = Encoding.ASCII.GetBytes(jsonPort);
+            IPEndPoint recieverEP = new IPEndPoint(IPAddress.Broadcast, 6000);
 
+            using (UdpClient senderSock = new UdpClient())
+            {
+                senderSock.EnableBroadcast = true;
+                senderSock.Send(data, data.Length, recieverEP);
+                //IPEndPoint fromReciever = new IPEndPoint(IPAddress.Any, 0);
+                //byte[] inData = senderSock.Receive(ref fromReciever);
             }
         }
 
 
-        
 
-        public bool PostSensorData()
-        {
-            return true;
-        }
     }
 }

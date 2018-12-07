@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="SensorModels">
       <HintPath>..\DLL\SensorModels.dll</HintPath>
     </Reference>

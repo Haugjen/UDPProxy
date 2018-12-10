@@ -33,16 +33,12 @@ namespace UDPProxy
             }
         }
 
-
         public void HandleOneRequest(UdpClient receiverSock, IPEndPoint remoteEP)
         {
 
             byte[] data = receiverSock.Receive(ref remoteEP);
             string inStr = Encoding.ASCII.GetString(data);
 
-            //Console.WriteLine("Modtaget: " + inStr);
-            //Console.WriteLine("Sender IP: " + remoteEP.Address + " port: "+ remoteEP.Port);
-            //Console.WriteLine("");
             if (inStr !="")
             {
                 if (inStr.Length == 17)
@@ -112,7 +108,7 @@ namespace UDPProxy
                 //ppm = JsonConvert.DeserializeObject<PiPortModel>(jsonPort);
             }
 
-            Console.WriteLine("Sender: " + jsonPort);
+            Console.WriteLine("Atempting to set port: " + jsonPort);
            
             byte[] data = Encoding.ASCII.GetBytes(jsonPort);
             IPEndPoint recieverEP = new IPEndPoint(IPAddress.Broadcast, 6000);

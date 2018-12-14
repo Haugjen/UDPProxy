@@ -19,8 +19,8 @@ namespace UDPProxy
             PORT = port;
         }
 
-        private readonly string URL = "https://watermasterapi.azurewebsites.net/api/";
-        
+        private readonly string BackupURL = "https://watermasterapi.azurewebsites.net/api/";
+        private readonly string URL = "https://mmo-watermasterapi.azurewebsites.net/api/";
         public void Start()
         {
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any,0);
